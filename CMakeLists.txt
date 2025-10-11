@@ -24,9 +24,9 @@ if (EXISTS ${picoVscode})
 endif()
 # ====================================================================================
 set(PICO_BOARD pico2 CACHE STRING "Board type")
-
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
+include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
 
 project(Tenna-Speaker C CXX ASM)
 
@@ -47,11 +47,13 @@ pico_enable_stdio_usb(Tenna-Speaker 1)
 # Add the standard library to the build
 target_link_libraries(Tenna-Speaker
         pico_stdlib
-        hardware_i2s)
+        pico_audio_i2s
+)
 
 # Add the standard include files to the build
 target_include_directories(Tenna-Speaker PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+        inc
 )
 
 pico_add_extra_outputs(Tenna-Speaker)
