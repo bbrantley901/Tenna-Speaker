@@ -44,6 +44,10 @@ pico_set_program_version(Tenna-Speaker "0.1")
 pico_enable_stdio_uart(Tenna-Speaker 0)
 pico_enable_stdio_usb(Tenna-Speaker 1)
 
+# Preprocessor Definitions
+target_compile_definitions(Tenna-Speaker PRIVATE
+        PICO_AUDIO_I2S_MONO_INPUT=1
+)
 # Add the standard library to the build
 target_link_libraries(Tenna-Speaker
         pico_stdlib
