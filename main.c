@@ -2,18 +2,22 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "tenna_talking.h"
+#include "pico/audio_i2s.h"
 
 /* CONSTANTS */
 #define I2S_DATA_PIN    (19U)
 #define I2S_BCLK_PIN    (20U)
 #define I2S_LRCLK_PIN   (21U)
-#include "pico/audio_i2s.h"
 
 #define SAMPLE_RATE     (44100U)
 #define BITS_PER_SAMPLE (16U)
 
-const int16_t *audio_samples = (const int16_t *)tenna_talking;
-size_t audio_sample_count = tenna_talking_len / 2; //2 Bytes/Sample
+/* Cast uint8_t array to int16_t */
+static const int16_t *audio_samples = (const int16_t *)tenna_talking;
+
+/* Sample Size is array length / 2 ; 2 bytes/sample*/
+static const size_t audio_sample_count = tenna_talking_len / 2;
+
 /* PRIVATE VARIABLES */
 static uint32_t volume = 32; // no gain to start
 
