@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ERROR_LEVEL=0
-export PICO_EXTRAS_PATH="$HOME/libraries/pico-extras"
+export PICO_EXTRAS_PATH="$HOME/pico-extras"
 export PICO_SDK_PATH="$HOME/.pico-sdk/pico-sdk/2.1.0"
 
 echo "PICO_EXTRAS_PATH is set to: $PICO_EXTRAS_PATH"
@@ -34,7 +34,7 @@ cd ..
 if [ -d "build" ]; then
   echo "build directory exists"
 else
-  echo "Creating build directory"
+  echo "Creating build directory and configuring CMake"
 fi
 
 cmake_configure
