@@ -19,22 +19,27 @@
 #define BITS_PER_SAMPLE (16U)
 
 /* GPIO Pins */
-#define BUTTON1_PIN     (1U) // TennaTalking
-#define BUTTON2_PIN     (2U) // Its Tv Time
-#define BUTTON3_PIN     (3U) // Tenna Beep
-#define BUTTON4_PIN     (4U) // Crowd Cheer
-#define BUTTON5_PIN     (5U) // Crowd Laughter
-#define BUTTON6_PIN     (6U) // Crowd Gasp
-#define I2S_DATA_PIN    (19U)
-#define I2S_BCLK_PIN    (20U)
-#define I2S_LRCLK_PIN   (21U)
+#define BUTTON_TENNA_TALKING_PIN  (1U) 
+#define BUTTON_ITS_TV_TIME_PIN    (2U)  
+#define BUTTON_TENNA_BEEP_PIN     (3U)  
+#define BUTTON_CROWD_CHEER_PIN    (4U)  
+#define BUTTON_CROWD_LAUGHTERPIN  (5U)  
+#define BUTTON_CROWD_GASP_PIN     (6U)  
+#define BUTTON_VOL_UP_PIN         (7U)
+#define BUTTON_VOL_DOWN_PIN       (8U)
+#define TOTAL_BUTTONS             (8U)
+#define I2S_DATA_PIN              (19U)
+#define I2S_BCLK_PIN              (20U)
+#define I2S_LRCLK_PIN             (21U)
 
-#define BUTTONS_GPIO_MASK ((1 << BUTTON1_PIN) | \
-                           (1 << BUTTON2_PIN) | \
-                           (1 << BUTTON3_PIN) | \
-                           (1 << BUTTON4_PIN) | \
-                           (1 << BUTTON5_PIN) | \
-                           (1 << BUTTON6_PIN))
+#define BUTTONS_GPIO_MASK ((1 << BUTTON_TENNA_TALKING_PIN) | \
+                           (1 << BUTTON_ITS_TV_TIME_PIN)   | \
+                           (1 << BUTTON_TENNA_BEEP_PIN)    | \
+                           (1 << BUTTON_CROWD_CHEER_PIN)   | \
+                           (1 << BUTTON_CROWD_LAUGHTERPIN) | \
+                           (1 << BUTTON_CROWD_GASP_PIN)    | \
+                           (1 << BUTTON_VOL_UP_PIN)        | \
+                           (1 << BUTTON_VOL_DOWN_PIN))
 
 #if 0 //Pre refactor
 /* Cast uint8_t array to int16_t */
@@ -81,7 +86,7 @@ static struct audio_file audio_file_list[] = {
 static audio_buffer_pool_t *ap = NULL;
 static volatile struct audio_file *current_audio_file; 
 static volatile bool audio_queued = false;
-static uint32_t volume = 32;
+static uint8_t volume = 128;
 
 /* PRIVATE FUNCTION PROTOTYPES */
 static audio_buffer_pool_t *init_audio(void);
@@ -101,8 +106,8 @@ int main()
     /* Button Setup */
     gpio_init_mask(BUTTONS_GPIO_MASK);
     gpio_set_dir_in_masked(BUTTONS_GPIO_MASK);
-    gpio_set_irq_enabled_with_callback(BUTTON1_PIN, GPIO_IRQ_EDGE_FALL, true, change_audio_file_callback);
-    for (int i = 1; i <= 6; i++) {
+    gpio_set_irq_enabled_with_callback(BUTTON_TENNA_TALKING_PIN, GPIO_IRQ_EDGE_FALL, true, change_audio_file_callback);
+    for (int i = 1; i <= TOTAL_BUTTONS; i++) {
         gpio_pull_up(i);
         gpio_set_irq_enabled(i, GPIO_IRQ_EDGE_FALL, true);
     }
@@ -158,9 +163,7 @@ static void play_audio(const int16_t *audio_samples, size_t sample_count)
         samples = (int16_t *) buffer->buffer->bytes; // Our allocated memory for audio samples; Equal to the buffer sample count * sample_stride
         count = buffer->max_sample_count;
         for (int i = 0; i < count; i++) { // Fill audio buffer with 256 samples
-          int16_t s = audio_samples[pos++];
-          samples[i] = s;
-          //samples[i+1] = s; 
+          samples[i] = (volume * audio_samples[pos++]) >> 8U; // Volume control
           if (pos >= sample_count) {
             buffer->sample_count = i; //Only process the samples we have
             break; // No more samples left; exit allocation of audio buffer
@@ -211,18 +214,40 @@ static audio_buffer_pool_t *init_audio(void)
    interrupt context */
 static void change_audio_file_callback(uint gpio, uint32_t event_mask)
 {
-  if (!gpio_get(BUTTON1_PIN)) {
-      current_audio_file = &audio_file_list[0];
-  } else if (!gpio_get(BUTTON2_PIN)) {
-      current_audio_file = &audio_file_list[1];
-  } else if (!gpio_get(BUTTON3_PIN)) {
-      current_audio_file = &audio_file_list[2];
-  } else if (!gpio_get(BUTTON4_PIN)) {
-      current_audio_file = &audio_file_list[3];
-  } else if (!gpio_get(BUTTON5_PIN)) {
-      current_audio_file = &audio_file_list[4];
-  } else if (!gpio_get(BUTTON6_PIN)) {
-      current_audio_file = &audio_file_list[5];
-  }
-  audio_queued = true; 
+    audio_queued = true;
+    switch (gpio) {
+    case BUTTON_TENNA_TALKING_PIN:
+        current_audio_file = &audio_file_list[0];
+        break;
+    case BUTTON_ITS_TV_TIME_PIN:
+        current_audio_file = &audio_file_list[1];
+        break;
+    case BUTTON_TENNA_BEEP_PIN:
+        current_audio_file = &audio_file_list[2];
+        break;
+    case BUTTON_CROWD_CHEER_PIN:
+        current_audio_file = &audio_file_list[3];
+        break;
+    case BUTTON_CROWD_LAUGHTERPIN:
+        current_audio_file = &audio_file_list[4];
+        break;
+    case BUTTON_CROWD_GASP_PIN:
+        current_audio_file = &audio_file_list[5];
+        break;
+    case BUTTON_VOL_UP_PIN:
+        if (volume <= 240) {
+            volume += 16; 
+        }
+        audio_queued = false;
+      break;
+    case BUTTON_VOL_DOWN_PIN:
+        if (volume >= 16) {
+            volume -= 16; 
+        }
+        audio_queued = false;
+        break;
+    default:
+        break;
+    }
+     
 }
