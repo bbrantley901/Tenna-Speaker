@@ -79,7 +79,7 @@ static struct audio_file audio_file_list[] = {
 static audio_buffer_pool_t *ap = NULL;
 static volatile struct audio_file *current_audio_file; 
 static volatile bool audio_queued = false;
-static uint8_t volume = 128;
+static uint16_t volume = 128;
 
 /* PRIVATE FUNCTION PROTOTYPES */
 
@@ -206,7 +206,7 @@ static void change_audio_file_callback(uint gpio, uint32_t event_mask)
             volume += 16; 
         }
         audio_queued = false;
-      break;
+        break;
     case BUTTON_VOL_DOWN_PIN:
         if (volume >= 16) {
             volume -= 16; 
