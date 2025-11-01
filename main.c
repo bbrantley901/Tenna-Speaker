@@ -19,6 +19,7 @@
 #define BITS_PER_SAMPLE (16U)
 
 /* GPIO Pins */
+
 #define BUTTON_TENNA_TALKING_PIN  (1U) 
 #define BUTTON_ITS_TV_TIME_PIN    (2U)  
 #define BUTTON_TENNA_BEEP_PIN     (3U)  
@@ -41,21 +42,13 @@
                            (1 << BUTTON_VOL_UP_PIN)        | \
                            (1 << BUTTON_VOL_DOWN_PIN))
 
-#if 0 //Pre refactor
-/* Cast uint8_t array to int16_t */
-static const int16_t *audio_samples = (const int16_t *)tenna_talking;
-
-/* Sample Size is array length / 2 ; 2 bytes/sample*/
-static const size_t audio_sample_count = tenna_talking_len / 2;
-#endif 
-
 struct audio_file {
     const int16_t *samples;
     size_t sample_count;
 };
 
-
 /* PRIVATE VARIABLES */
+
 static struct audio_file audio_file_list[] = {
     {
         .samples = (const int16_t *)tenna_talking,
@@ -89,6 +82,7 @@ static volatile bool audio_queued = false;
 static uint8_t volume = 128;
 
 /* PRIVATE FUNCTION PROTOTYPES */
+
 static audio_buffer_pool_t *init_audio(void);
 static void play_audio(const int16_t *audio_samples, size_t sample_count);
 static void change_audio_file_callback(uint gpio, uint32_t event_mask);
@@ -115,39 +109,12 @@ int main()
     /* Event Loop*/
     while(1)
     {   
-# if (1)
-      /* Button Audio Playback */
         if (audio_queued) {
-/* With this current configuration, an audio file will play in its entirety before 
-   the next interrupt can change it. I can keep this as is but if I want to change audio
-   mid playback then I need to edit play_audio to return if the IRQ activates during execution */
             play_audio(current_audio_file->samples, current_audio_file->sample_count); 
             audio_queued = false; 
         }
-#else
-        /* Continuous Audio Playback for Demo Purposes */
-        play_audio(current_audio_file->samples, current_audio_file->sample_count);
-        sleep_ms(2000);
-#endif
-    }
 
-#if 0 //Pre refactor
-    size_t pos = 0;
-    while (true)
-    {
-        audio_buffer_t *buffer = take_audio_buffer(ap, true);
-        int16_t *samples = (int16_t *) buffer->buffer->bytes;
-        size_t count = buffer->max_sample_count;
-        for (uint i = 0; i < count; i++) {
-            int16_t s = audio_samples[pos++];
-            samples[i] = s;
-            samples[i+1] = s;
-            if (pos >= audio_sample_count) pos = 0;
-        }
-        buffer->sample_count = count;
-        give_audio_buffer(ap, buffer);
     }
-#endif 
     return 0;
 }
 
@@ -170,7 +137,7 @@ static void play_audio(const int16_t *audio_samples, size_t sample_count)
           }
         }
         buffer->sample_count = count;
-        give_audio_buffer(ap, buffer); // Play audio buffer
+        give_audio_buffer(ap, buffer);
     }
 }
 
